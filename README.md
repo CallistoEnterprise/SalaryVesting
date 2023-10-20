@@ -23,7 +23,7 @@ https://github.com/CallistoEnterprise/SalaryVesting/blob/bc363d04de8fc3d815f8e40
 https://github.com/CallistoEnterprise/SalaryVesting/blob/bc363d04de8fc3d815f8e40838be2072a9304870/SalaryVesting.sol#L134
 
 - rescue any tokens / CLO from the contract
-https://github.com/CallistoEnterprise/SalaryVesting/blob/bc363d04de8fc3d815f8e40838be2072a9304870/SalaryVesting.sol#L134
+https://github.com/CallistoEnterprise/SalaryVesting/blob/bc363d04de8fc3d815f8e40838be2072a9304870/SalaryVesting.sol#L187
 
 ### An employee can:
 
