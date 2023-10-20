@@ -3,6 +3,8 @@
 Salary Vasting contract allows to allocation specific amount of CLO for an employee and pays his salary and bonuses from this amount every specific period of time.
 Salary and bonuses are set in BUSTD, so payouts in CLO are calculated based on Soy.Finance CLO-BUSDT pool (fee and slippage isn't counted).
 
+To allocate CLO for an employee it should be transferred to his Salary Vasting contract.
+
 On deployment should be set:
 - `address _employee` - address of employee wallet
 - `uint256 _salary` - salary in BUSDT without decimals (i.e. 1000 means 1000 BUSDT). Salary can be claimed each `salaryPeriod` (30 days by default).
