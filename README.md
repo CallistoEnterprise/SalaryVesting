@@ -22,7 +22,7 @@ https://github.com/CallistoEnterprise/SalaryVesting/blob/bc363d04de8fc3d815f8e40
 - pause/unpause employee payouts
 https://github.com/CallistoEnterprise/SalaryVesting/blob/bc363d04de8fc3d815f8e40838be2072a9304870/SalaryVesting.sol#L134
 
-- rescue any tokens / CLO from the contract
+- rescue any tokens / CLO from the contract (to rescue CLO, the `_token` should be `0x0000000000000000000000000000000000000000`)
 https://github.com/CallistoEnterprise/SalaryVesting/blob/bc363d04de8fc3d815f8e40838be2072a9304870/SalaryVesting.sol#L187
 
 ### An employee can:
