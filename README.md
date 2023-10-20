@@ -6,11 +6,11 @@ Salary and bonuses are set in BUSTD, so payouts in CLO are calculated based on S
 To allocate CLO for an employee it should be transferred to his Salary Vasting contract.
 
 On deployment should be set:
-- `address _employee` - address of employee wallet
-- `uint256 _salary` - salary in BUSDT without decimals (i.e. 1000 means 1000 BUSDT). Salary can be claimed each `salaryPeriod` (30 days by default).
-- `uint256 _bonus` - bonus in BUSDT without decimals. Bonus can be claimed each `bonusPeriod ` (91 days by default).
+- `_employee` - address of employee wallet
+- `_salary` - salary in BUSDT without decimals (i.e. 1000 means 1000 BUSDT). Salary can be claimed each `salaryPeriod` (30 days by default).
+- `_bonus` - bonus in BUSDT without decimals. Bonus can be claimed each `bonusPeriod ` (91 days by default).
 - `_startTimestamp` - UNIX timestamp from which start each period.
-- `address _newOwner` - address of the owner, who can change parameters and withdraw tokens from the contract.
+- `_newOwner` - address of the owner, who can change parameters and withdraw tokens from the contract.
 
 ### The owner can:
 - change employee address, salary and bonus amounts
