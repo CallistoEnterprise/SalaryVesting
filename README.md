@@ -5,6 +5,8 @@ Salary and bonuses are set in BUSTD, so payouts in CLO are calculated based on S
 
 To allocate CLO for an employee it should be transferred to his Salary Vasting contract.
 
+If the contract has less CLO than should be paid to the employee, then all available CLO will be transferred to the employee and the rest will be saved to the `pending` variable. 
+
 On deployment should be set:
 - `_employee` - address of employee wallet
 - `_salary` - salary in BUSDT without decimals (i.e. 1000 means 1000 BUSDT). Salary can be claimed each `salaryPeriod` (30 days by default).
