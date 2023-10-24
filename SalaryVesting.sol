@@ -81,20 +81,18 @@ contract SalaryVesting is Ownable {
 
     address public employee;    // address of employee who can claim CLO
     uint256 public startTimestamp;  // timestamp from which start periods
+    uint256 public lastClaimed; // timestamp when CLO was claimed last time
     uint256 public salary; // salary in BUSDT (without decimals)
     uint256 public salaryPeriod = 30;   // salary period in days
-    uint256 public lastSalaryClaim; // timestamp when salary was claimed last time
     uint256 public bonus; // bonus in BUSDT (without decimals)
     uint256 public bonusPeriod = 91;    // period in days for bonus
-    uint256 public lastBonusClaim; // timestamp when bonus was claimed last time
     uint256 public yearlyBonus; // yearly bonus in BUSDT (without decimals)
     uint256 public yearlyBonusPeriod = 365;    // period in days for yearly bonus
-    uint256 public lastYearlyBonusClaim; // timestamp when yearly bonus was claimed last time
     uint256 public pending; // Amount of CLO that is pending due to insufficient CLO balance
     bool public isPaused;
 
     event SetSalary(address _employee, uint256 _salary, uint256 _bonus, uint256 _yearlyBonus);
-    event SetPeriods(uint256 _salaryPeriod, uint256 _bonusPeriod, uint256 _yearlyBonusPeriod);
+    event SetPeriods(uint256 _salaryPeriod, uint256 _bonusPeriod, uint256 _yearlyBonusPeriod, uint256 _startTimestamp);
     event Claim(uint256 amount, uint256 pendingAmount);
 
     event Rescue(address _token, uint256 _amount);
@@ -103,9 +101,7 @@ contract SalaryVesting is Ownable {
     constructor (address _employee, uint256 _salary, uint256 _bonus, uint256 _yearlyBonus, uint256 _startTimestamp, address _newOwner) {
         require(_startTimestamp != 0);
         startTimestamp = _startTimestamp;
-        lastSalaryClaim = _startTimestamp;
-        lastBonusClaim = _startTimestamp;
-        lastYearlyBonusClaim = _startTimestamp;
+        lastClaimed = _startTimestamp;
         employee = _employee;
         salary = _salary;
         bonus = _bonus;
@@ -134,11 +130,9 @@ contract SalaryVesting is Ownable {
         bonusPeriod = _bonusPeriod;
         yearlyBonusPeriod = _yearlyBonusPeriod;
         startTimestamp = _startTimestamp;
-        lastSalaryClaim = _startTimestamp;
-        lastBonusClaim = _startTimestamp;
-        lastYearlyBonusClaim = _startTimestamp;
+        lastClaimed = _startTimestamp;
 
-        emit SetPeriods(_salaryPeriod, _bonusPeriod, _yearlyBonusPeriod);
+        emit SetPeriods(_salaryPeriod, _bonusPeriod, _yearlyBonusPeriod, _startTimestamp);
     }
 
     function setPause(bool pause) external onlyOwner {
@@ -163,9 +157,7 @@ contract SalaryVesting is Ownable {
             } else {
                 pending = 0;
             }
-            lastSalaryClaim = block.timestamp;
-            lastBonusClaim = block.timestamp;
-            lastYearlyBonusClaim = block.timestamp;
+            lastClaimed = block.timestamp;
             safeTransferCLO(employee, unlockedAmount);
             emit Claim(unlockedAmount, pending);
         }
@@ -177,19 +169,19 @@ contract SalaryVesting is Ownable {
         unlockedAmount = pending;   // if contract has debt
 
         // calculate BUSDT amount for salary 
-        uint256 paidPeriods = (lastSalaryClaim - startTimestamp) / (salaryPeriod * 1 days);
+        uint256 paidPeriods = (lastClaimed - startTimestamp) / (salaryPeriod * 1 days);
         uint256 passedPeriods = (block.timestamp - startTimestamp) / (salaryPeriod * 1 days);
         uint256 unpaidPeriods = passedPeriods - paidPeriods;
         uint256 pendingBUSDT = unpaidPeriods * salary;   // pending amount in BUSDT
 
         // calculate BUSDT amount for bonus 
-        paidPeriods = (lastBonusClaim - startTimestamp) / (bonusPeriod * 1 days);
+        paidPeriods = (lastClaimed - startTimestamp) / (bonusPeriod * 1 days);
         passedPeriods = (block.timestamp - startTimestamp) / (bonusPeriod * 1 days);
         unpaidPeriods = passedPeriods - paidPeriods;
         pendingBUSDT += (unpaidPeriods * bonus);     // pending amount in BUSDT
 
         // calculate BUSDT amount for yearly bonus 
-        paidPeriods = (lastYearlyBonusClaim - startTimestamp) / (yearlyBonusPeriod * 1 days);
+        paidPeriods = (lastClaimed - startTimestamp) / (yearlyBonusPeriod * 1 days);
         passedPeriods = (block.timestamp - startTimestamp) / (yearlyBonusPeriod * 1 days);
         unpaidPeriods = passedPeriods - paidPeriods;
         pendingBUSDT += (unpaidPeriods * yearlyBonus);     // pending amount in BUSDT
