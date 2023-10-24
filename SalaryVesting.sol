@@ -87,24 +87,30 @@ contract SalaryVesting is Ownable {
     uint256 public bonus; // bonus in BUSDT (without decimals)
     uint256 public bonusPeriod = 91;    // period in days for bonus
     uint256 public lastBonusClaim; // timestamp when bonus was claimed last time
+    uint256 public yearlyBonus; // yearly bonus in BUSDT (without decimals)
+    uint256 public yearlyBonusPeriod = 365;    // period in days for yearly bonus
+    uint256 public lastYearlyBonusClaim; // timestamp when yearly bonus was claimed last time
+    uint256 public pending; // Amount of CLO that is pending due to insufficient CLO balance
     bool public isPaused;
 
-    event SetSalary(address _employee, uint256 _salary, uint256 _bonus);
-    event SetPeriods(uint256 _salaryPeriod, uint256 _bonusPeriod);
-    event Claim(uint256 amount);
+    event SetSalary(address _employee, uint256 _salary, uint256 _bonus, uint256 _yearlyBonus);
+    event SetPeriods(uint256 _salaryPeriod, uint256 _bonusPeriod, uint256 _yearlyBonusPeriod);
+    event Claim(uint256 amount, uint256 pendingAmount);
 
     event Rescue(address _token, uint256 _amount);
 
 
-    constructor (address _employee, uint256 _salary, uint256 _bonus, uint256 _startTimestamp, address _newOwner) {
+    constructor (address _employee, uint256 _salary, uint256 _bonus, uint256 _yearlyBonus, uint256 _startTimestamp, address _newOwner) {
         require(_startTimestamp != 0);
         startTimestamp = _startTimestamp;
         lastSalaryClaim = _startTimestamp;
         lastBonusClaim = _startTimestamp;
+        lastYearlyBonusClaim = _startTimestamp;
         employee = _employee;
         salary = _salary;
         bonus = _bonus;
-        emit SetSalary(_employee, _salary, _bonus);
+        yearlyBonus = _yearlyBonus;
+        emit SetSalary(_employee, _salary, _bonus, _yearlyBonus);
         _owner = _newOwner;
         emit OwnershipTransferred(address(0), _newOwner);
     }
@@ -112,23 +118,27 @@ contract SalaryVesting is Ownable {
     receive() external payable {}
 
     // Set salary in BUSDT without decimals
-    function setSalary(address _employee, uint256 _salary, uint256 _bonus) external onlyOwner {
+    function setSalary(address _employee, uint256 _salary, uint256 _bonus, uint256 _yearlyBonus) external onlyOwner {
         if (!isPaused) _claim();   // claim unlocked salary and bonus to employee address
         employee = _employee;
         salary = _salary;
         bonus = _bonus;
-        emit SetSalary(_employee, _salary, _bonus);
+        yearlyBonus = _yearlyBonus;
+        emit SetSalary(_employee, _salary, _bonus, _yearlyBonus);
     }
 
     // Set periods in days and start timestamp
-    function setPeriods(uint256 _salaryPeriod, uint256 _bonusPeriod, uint256 _startTimestamp) external onlyOwner {
+    function setPeriods(uint256 _salaryPeriod, uint256 _bonusPeriod, uint256 _yearlyBonusPeriod, uint256 _startTimestamp) external onlyOwner {
         if (!isPaused) _claim();   // claim unlocked salary and bonus to employee address
-        bonusPeriod = _bonusPeriod;
         salaryPeriod = _salaryPeriod;
+        bonusPeriod = _bonusPeriod;
+        yearlyBonusPeriod = _yearlyBonusPeriod;
         startTimestamp = _startTimestamp;
         lastSalaryClaim = _startTimestamp;
         lastBonusClaim = _startTimestamp;
-        emit SetPeriods(_salaryPeriod, _bonusPeriod);
+        lastYearlyBonusClaim = _startTimestamp;
+
+        emit SetPeriods(_salaryPeriod, _bonusPeriod, _yearlyBonusPeriod);
     }
 
     function setPause(bool pause) external onlyOwner {
@@ -147,17 +157,25 @@ contract SalaryVesting is Ownable {
         uint256 unlockedAmount = getUnlockedAmount();
         if (unlockedAmount != 0) {
             uint256 balance = address(this).balance;
-            if (unlockedAmount > balance) unlockedAmount = balance;
+            if (unlockedAmount > balance) {
+                pending = unlockedAmount - balance;
+                unlockedAmount = balance;
+            } else {
+                pending = 0;
+            }
             lastSalaryClaim = block.timestamp;
             lastBonusClaim = block.timestamp;
+            lastYearlyBonusClaim = block.timestamp;
             safeTransferCLO(employee, unlockedAmount);
-            emit Claim(unlockedAmount);
+            emit Claim(unlockedAmount, pending);
         }
     }
 
 
     // return unlocked amount of CLO
     function getUnlockedAmount() public view returns(uint256 unlockedAmount) {
+        unlockedAmount = pending;   // if contract has debt
+
         // calculate BUSDT amount for salary 
         uint256 paidPeriods = (lastSalaryClaim - startTimestamp) / (salaryPeriod * 1 days);
         uint256 passedPeriods = (block.timestamp - startTimestamp) / (salaryPeriod * 1 days);
@@ -169,11 +187,18 @@ contract SalaryVesting is Ownable {
         passedPeriods = (block.timestamp - startTimestamp) / (bonusPeriod * 1 days);
         unpaidPeriods = passedPeriods - paidPeriods;
         pendingBUSDT += (unpaidPeriods * bonus);     // pending amount in BUSDT
+
+        // calculate BUSDT amount for yearly bonus 
+        paidPeriods = (lastYearlyBonusClaim - startTimestamp) / (yearlyBonusPeriod * 1 days);
+        passedPeriods = (block.timestamp - startTimestamp) / (yearlyBonusPeriod * 1 days);
+        unpaidPeriods = passedPeriods - paidPeriods;
+        pendingBUSDT += (unpaidPeriods * yearlyBonus);     // pending amount in BUSDT
+        
         pendingBUSDT = pendingBUSDT * 1e18; // add decimals
 
         // calculate CLO amount based on CLO_BUSDT pool
         (uint112 reserveBUSDT, uint112 reserveCLO,) = CLO_BUSDT.getReserves();
-        unlockedAmount = pendingBUSDT * reserveCLO / reserveBUSDT;
+        unlockedAmount += (pendingBUSDT * reserveCLO / reserveBUSDT);
     }
 
     // return allocated amount of CLO
