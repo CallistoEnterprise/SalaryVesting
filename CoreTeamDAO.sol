@@ -76,6 +76,10 @@ interface IERC20 {
 
 contract CoreTeamDAO is Ownable {
     ISoyPair constant public CLO_BUSDT = ISoyPair(0xB852AD87329986EaC6e991954fe329231D1E4De1);    // reserve0 - BUSDT, reserve1 - WCLO
+    uint256 constant public salaryPeriod = 30 days;   // salary period in seconds
+    uint256 constant public quarterlyPeriod = 91 days;    // period in seconds for quarterly payment 
+    uint256 constant public yearlyPeriod = 365 days;    // period in seconds for yearly payment
+
 
     struct Employee {
         uint256 startTimestamp;  // timestamp from which start periods
@@ -91,12 +95,6 @@ contract CoreTeamDAO is Ownable {
 
     mapping (address => Employee) public employees;
     address[] public employeesList; // list of employees
-
-    
-
-    uint256 public salaryPeriod = 30 days;   // salary period in seconds
-    uint256 public quarterlyPeriod = 91 days;    // period in seconds for quarterly payment 
-    uint256 public yearlyPeriod = 365 days;    // period in seconds for yearly payment
     bool public isPaused;
 
     event SetSalary(address employee, uint256 salary, uint256 quarterlyPercent, uint256 yearlyPercent, uint256 startTimestamp);
@@ -210,15 +208,20 @@ contract CoreTeamDAO is Ownable {
     }
 
     // return allocated amount of CLO
-    function getAllocatedAmount() external view returns(int256 allocated) {
+    function getAllocatedAmount() external view returns(int256 allocatedToClaim, int256 totalAllocated) {
         uint256 len = employeesList.length;
-        allocated = int256(address(this).balance);
+        allocatedToClaim = int256(address(this).balance);
+        uint256 totalUnlocked;
+        uint256 totalPending;
         for (uint i = 0; i < len; i++) {
             if (!employees[employeesList[i]].isStopped) {   // don't count employees with stopped payouts
-                (uint256 unclaimed,,) = getUnlockedAmount(employeesList[i]);
-                allocated = allocated - int256(unclaimed);
+                (uint256 unlocked, uint256 quarterlyPending, uint256 yearlyPending) = getUnlockedAmount(employeesList[i]);
+                totalUnlocked += unlocked;
+                totalPending = totalPending + quarterlyPending + yearlyPending;
             }
         }
+        allocatedToClaim = allocatedToClaim - int256(totalUnlocked);
+        totalAllocated = allocatedToClaim - int256(totalPending);
     }
 
     function getEmployeesList() external view returns(address[] memory) {
