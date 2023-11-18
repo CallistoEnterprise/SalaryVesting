@@ -1,3 +1,41 @@
+# CoreTeamDAO
+
+[CoreTeamDAO](https://explorer.callisto.network/address/0xEc43593c62eA57F749eE0D44bE2e982C8eCb51A1/transactions) manage employees payments accordingly rules. 
+
+Company sets an employee salary in USD, and sets payouts rules: the percentage of salary that pays monthly, quarterly, yearly.
+
+When an employee claim payment, the salary converts from USD to CLO by current CLO/BUSDT price on the Soy.Finance, then amount in CLO splits amount monthly, quarterly, and yearly parts.
+
+For example, if salary is 1000 USD, and it splits by 20/40/40 for monthly/quarterly/yearly payments accordingly, and CLO price is 0.001 USD, then on claim an employee receives 200K CLO instantly, and 400K will be locked for quarterly payment, and 400K will be locked for yearly payment.
+
+Transferring to CLO to contract address add it to payouts budget.
+
+## Main functions
+
+### claim
+
+Allow to employee to [claim](https://explorer.callisto.network/address/0xEc43593c62eA57F749eE0D44bE2e982C8eCb51A1/write-proxy) unlocked CLO, and fix CLO/USD price on moment of claim.
+
+### getUnlockedAmount
+
+Using function [getUnlockedAmount](https://explorer.callisto.network/address/0xEc43593c62eA57F749eE0D44bE2e982C8eCb51A1/read-proxy) an employee can see, how much CLO is unlocked and how much is reserved for quarterly and yearly payment (he should enter his address in the parameter field). This function shows estimated amount on moment of call. It uses current CLO price from SOY finance. After `claim` the CLO price will be fixed.
+
+### employees
+
+The function [employees](https://explorer.callisto.network/address/0xEc43593c62eA57F749eE0D44bE2e982C8eCb51A1/read-proxy) returns info about specific employee.
+
+## Owner's privileges  
+
+The owner of CoreTeamDAO is a [multisig](https://explorer.callisto.network/address/0xC7B38729e6939E406B4E3154B38B71F51e400DEf/read-contract) contract and it can:
+
+1. Rescue all CLO or tokens from contract.
+2. Change employee's salary, start time, percentage for monthly/quarterly/yearly payments.
+3. Stop payment for specific employee.
+4. Pause entire contract (stop payments for all).
+5. Upgrade contract.
+
+
+
 # SalaryVesting
 
 Salary Vasting contract allows to allocation specific amount of CLO for an employee and pays his salary and bonuses from this amount every specific period of time.
