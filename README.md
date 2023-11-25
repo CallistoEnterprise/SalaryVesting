@@ -24,6 +24,12 @@ Using function [getUnlockedAmount](https://explorer.callisto.network/address/0xE
 
 The function [employees](https://explorer.callisto.network/address/0xEc43593c62eA57F749eE0D44bE2e982C8eCb51A1/read-proxy) returns info about specific employee.
 
+### getAllocatedAmount
+
+Using function [getAllocatedAmount](https://explorer.callisto.network/address/0x472a060A168075B9778eEC9e44D7c9E3A300927d/read-proxy) is possible to see if contract has enough CLO for salaries. It returns positive or negative balance. The negative amount shows how many CLO is needed to add to contract.
+- `allocatedToClaim`: contract balance - unlocked amount of all employees. If it's negative employees can't receive their CLO.
+- `totalAllocated`: contract balance - total amount of CLO reserved for salaries. If it's negative, then not enough CLO to cover all salaries (including pending parts).
+
 ## Owner's privileges  
 
 The owner of CoreTeamDAO is a [multisig](https://explorer.callisto.network/address/0xC7B38729e6939E406B4E3154B38B71F51e400DEf/read-contract) contract and it can:
