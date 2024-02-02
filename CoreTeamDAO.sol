@@ -99,6 +99,7 @@ contract CoreTeamDAO is Ownable {
 
     event SetSalary(address employee, uint256 salary, uint256 quarterlyPercent, uint256 yearlyPercent, uint256 startTimestamp);
     event Claim(uint256 amount, uint256 pendingAmount);
+    event RemoveEmployee(address employee);
     event Rescue(address token, uint256 amount);
 
 
@@ -137,6 +138,25 @@ contract CoreTeamDAO is Ownable {
     // stop employee payment 
     function setStop(address employee, bool stopped) external onlyOwner {
         employees[employee].isStopped = stopped;
+    }
+
+    // Remove employee
+    function removeEmployee(address employee) external onlyOwner {
+        require(employees[employee].isStopped, "Employee is not stopped");
+        uint256 len = employeesList.length - 1;
+        address last = employeesList[len];
+        if(last == employee) employeesList.pop();   // if employee is the last in the list, then remove it
+        else {
+            for(uint i = 0; i < len; i++) {
+                if(employeesList[i] == employee) {
+                    employeesList[i] = last;
+                    employeesList.pop();
+                    break;
+                }
+            }
+        }
+        delete employees[employee];
+        emit RemoveEmployee(employee);
     }
 
     // claim unlocked salary and bonus to employee address
